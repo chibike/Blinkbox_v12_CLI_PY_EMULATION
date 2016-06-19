@@ -23,7 +23,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.verticallayout = QtGui.QVBoxLayout(self.centralwidget)
         self.verticallayout.setObjectName(_fromUtf8("verticallayout"))
         
-        self.commandInterface = CommandInterface()
+        self.commandInterface = CommandInterface(self)
         self.commandInterface.setSceneRect(0, 0, 1050, 710)
         
         self.graphicsView = QtGui.QGraphicsView( self.commandInterface )

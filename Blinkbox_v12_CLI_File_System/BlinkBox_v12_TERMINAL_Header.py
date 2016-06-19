@@ -53,6 +53,7 @@ class CommandBuffer():
 class CommandInterface(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         super(CommandInterface, self).__init__(parent)
+        self._parent = parent
         brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         brush.setStyle(QtCore.Qt.SolidPattern)
         self.setBackgroundBrush(brush)
@@ -133,6 +134,18 @@ class CommandInterface(QtGui.QGraphicsScene):
             self._cursor.setData(0, [self._line, self._column])
             self._length_of_current_line_buffer = len(self._current_line.toPlainText())
             
+    def delete(self):
+        if ( self._current_line == None or not(isinstance(self._current_line, QtGui.QGraphicsTextItem)) ):
+            return
+        elif ( len(str( self._current_line.toPlainText() )) <= 0 ):
+            return
+        else:
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            #self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.setPosition(self._column - self._current_line_start_column, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.deleteChar()
+            self._length_of_current_line_buffer = len(self._current_line.toPlainText())
     def printf( self, string, color=None ):
         if(self._current_line == None and color != None):
             self._current_line_start_column = self._column
@@ -292,7 +305,7 @@ class CommandInterface(QtGui.QGraphicsScene):
         self._input_mode = True
         self.printf(prompt, QtGui.QColor(0,255,0))
         self.endprintf()
-        self.printf('', QtGui.QColor(0,255,0))
+        self.printf('', QtGui.QColor(0,0,255))
         self._data_type = data_type
         self._input_data = ''
     def keyPressEvent(self, event):
@@ -309,7 +322,7 @@ class CommandInterface(QtGui.QGraphicsScene):
                 self._input_data = removeChar(self._input_data, self._column - self._current_line_start_column)
             elif key == '\t':
                 print "Tab btn"
-            elif str(event.key()) == '16777235':#KEY DOWN
+            elif str(event.key()) == '16777235':#KEY UP
                 if self._data_type != "__password__" and self._data_type != "__username__":
                     self._input_data = self._commandBuffer.scrollUp()
                     self.replacef( self._input_data )
@@ -335,12 +348,21 @@ class CommandInterface(QtGui.QGraphicsScene):
                 self._cursor.setPos(int(self._column*point_size*0.84),
                                     int(1.5*self._line*point_size) + int(0.6*point_size))
                 self._cursor.setData(0, [self._line, self._column])
-            elif str(event.key()) == '16777223':
-                print "Delete btn"
-            elif str(event.key()) == '16777232':
-                print "Home btn"
-            elif str(event.key()) == '16777233':
-                print "End btn"
+            elif str(event.key()) == '16777223':#KEY DELETE
+                self.delete()
+                self._input_data = removeChar(self._input_data, self._column - self._current_line_start_column)
+            elif str(event.key()) == '16777232':#KEY HOME
+                self._column = self._current_line_start_column
+                point_size = self.font().pointSize()
+                self._cursor.setPos(int(self._column*point_size*0.84),
+                                    int(1.5*self._line*point_size) + int(0.6*point_size))
+                self._cursor.setData(0, [self._line, self._column])
+            elif str(event.key()) == '16777233':#KEY END
+                self._column = self._current_line_start_column + self._length_of_current_line_buffer
+                point_size = self.font().pointSize()
+                self._cursor.setPos(int(self._column*point_size*0.84),
+                                    int(1.5*self._line*point_size) + int(0.6*point_size))
+                self._cursor.setData(0, [self._line, self._column])
             elif str(event.key()) == '16777238':
                 print "PgUp btn"
             elif str(event.key()) == '16777239':
@@ -425,9 +447,15 @@ class CommandInterface(QtGui.QGraphicsScene):
             elif data == '':
                 pass
             elif data == 'exit':
-                pass
+                choice = QtGui.QMessageBox.question(self._parent, "Close Window",
+                                                    "Do you want to exit?",
+                                                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
+                if choice == QtGui.QMessageBox.Yes:
+                    sys.exit()
+                else:
+                    pass
             else:
-                self.println(data+" is not a valid Blinkbox_v12 Shell command")
+                self.println(data+" is not a valid Blinkbox_v12 Shell command", QtGui.QColor(255, 0, 0))
             self._data_collection_mode = "__command__"
             self.inputf( self._USER+" "+self._PWD+" > ",
                          "__command__" )
@@ -439,31 +467,31 @@ class CommandInterface(QtGui.QGraphicsScene):
         options = options.lstrip().rstrip().split(' ')
         File = options[0]
         if File == '':
-            self.println("ERROR could not remove file")
+            self.println("ERROR could not remove file", QtGui.QColor(255, 0, 0))
         elif File.startswith('\\'):
             try:
                 os.remove(self._WIN_PWD+'\\'+File)
             except OSError:
-                self.println("ERROR directory is not empty")
+                self.println("ERROR directory is not empty", QtGui.QColor(255, 0, 0))
             except:
                 try:
                     os.removedirs(self._WIN_PWD+'\\'+File)
                 except OSError:
-                    self.println("ERROR directory is not empty")
+                    self.println("ERROR directory is not empty", QtGui.QColor(255, 0, 0))
                 except:
-                    self.println("ERROR could not remove")
+                    self.println("ERROR could not remove", QtGui.QColor(255, 0, 0))
         elif File.count('.') == 1:
             try:
                 os.remove(self._WIN_PWD+current_dir+'\\'+File)
             except:
-                self.println("ERROR could not remove file")
+                self.println("ERROR could not remove file", QtGui.QColor(255, 0, 0))
         else:
             try:
                 os.removedirs(self._WIN_PWD+current_dir+'\\'+File)
             except OSError:
-                self.println("ERROR directory is not empty")
+                self.println("ERROR directory is not empty", QtGui.QColor(255, 0, 0))
             except:
-                self.println("ERROR could not remove directory")
+                self.println("ERROR could not remove directory", QtGui.QColor(255, 0, 0))
       
     def processTouchCmd( self, options, current_dir ):
         options = options.lstrip().rstrip().split(' ')
@@ -476,18 +504,18 @@ class CommandInterface(QtGui.QGraphicsScene):
         try:
             open(filename, 'w').close()
         except:
-            self.println("ERROR could not create file")
+            self.println("ERROR could not create file") 
     
     def processTreeCmd( self, options, current_dir, tab_index=0 ):
         options = options.lstrip().rstrip().split(' ')
         if options[0] == '':
-            self.println( self.processTabs( self.getTabs(tab_index) ) + current_dir.split('\\')[-1] )
+            self.println( self.processTabs( self.getTabs(tab_index) ) + current_dir.split('\\')[-1], QtGui.QColor(255, 255, 0))
             tab_index += 1
             for filename in os.listdir( self._WIN_PWD+'\\'+current_dir ):
                 if filename.count('.') <= 0:# is directory
                     self.processTreeCmd( '', current_dir+'\\'+filename, tab_index )
                 else:
-                    self.println( self.processTabs( self.getTabs(tab_index) ) + filename )
+                    self.println( self.processTabs( self.getTabs(tab_index) ) + filename , QtGui.QColor(0, 0, 255))
         else:
             filename = options[0]
             if filename.startswith('\\'):
@@ -498,10 +526,10 @@ class CommandInterface(QtGui.QGraphicsScene):
     def processTabs( self, tabs ):
         if len(tabs) <= 0:
             return ''
-        suffix = '|___ '
+        suffix = '|__ '
         string = ''
         for i in range( len(tabs)-1 ):
-            string = string + '|    '
+            string = string + '    '
         return string+suffix
 
     def getTabs(self, length):
@@ -514,7 +542,7 @@ class CommandInterface(QtGui.QGraphicsScene):
         options = options.lstrip().rstrip().split(' ')
         length = 50
         if options[0] == '':
-            self.println("ERROR invalid filename")
+            self.println("ERROR invalid filename", QtGui.QColor(255, 0, 0))
             return
         elif len(options) > 1:
             try:
@@ -525,28 +553,32 @@ class CommandInterface(QtGui.QGraphicsScene):
         try:
             File = open(filename, 'r')
             self.println("")
-            self.println("--- "+filename.upper()+" ---")
-            self.println(str(File.read(length)))
-            self.println("*** "+filename.upper()+" ***")
+            self.println("--- "+filename.upper()+" ---", QtGui.QColor(250, 100, 120))
+            lines = str(File.read(length)).split('\n')
+            for line in lines:
+                self.println(line, QtGui.QColor(55, 200, 120))
+            self.println("*** "+filename.upper()+" ***", QtGui.QColor(250, 100, 120))
             self.println("")
             File.close()
-        except:
-            self.println("ERROR could not open file")
+        except IOError:
+            self.println("ERROR permission denied", QtGui.QColor(255, 0, 0))
+        except :
+            self.println("ERROR could not open file", QtGui.QColor(255, 0, 0))
     def processMakeDirCmd( self, options, current_dir ):
         options = options.lstrip().rstrip().split(' ')
         directory = options[0]
         if directory == "":
-            self.println("ERROR could not create directory")
+            self.println("ERROR could not create directory", QtGui.QColor(255, 0, 0))
         elif directory.startswith("\\"):
             try:
                 os.mkdir(self._WIN_PWD+directory)
             except:
-                self.println("ERROR could not create directory")
+                self.println("ERROR could not create directory", QtGui.QColor(255, 0, 0))
         else:
             try:
                 os.mkdir(self._WIN_PWD+current_dir+"\\"+directory)
             except:
-                self.println("ERROR could not create directory")
+                self.println("ERROR could not create directory", QtGui.QColor(255, 0, 0))
     def processChangeDirCmd( self, options, current_dir ):
         options = options.lstrip().rstrip().split(' ')[0]
         if options == '':
@@ -591,13 +623,15 @@ class CommandInterface(QtGui.QGraphicsScene):
     def processListDirCmd( self, options, current_dir ):
         if options == '':
             self.runListDir( current_dir )
+        else:
+            self.println('ls'+options+" is not a valid Blinkbox_v12 Shell command", QtGui.QColor(255, 0, 0))
     def runListDir( self, current_dir ):
         os.chdir(self._WIN_PWD+current_dir)
         filenames = os.listdir(self._WIN_PWD+current_dir)
         total = len(filenames)
-        self.println("Total number of files = "+str(total))
+        self.println("Total number of files = "+str(total), QtGui.QColor(250, 100, 120))
         for filename in filenames:
-            self.println(filename)
+            self.println(filename, QtGui.QColor(55, 200, 120))
     def verifyUser(self):
         self._data_collection_mode = "__verify_user__"
         self.inputf( "Username: ", "__username__" )
@@ -613,10 +647,13 @@ def fileParseCsvData(filename):
         return ["ERROR"]
 
 def insertChar(string, char, index):#is zero indexed
-    return string[:index] + char + string[index:]
+    if index < 0 or index > len(string):
+        return string
+    else:
+        return string[:index] + char + string[index:]
 
 def removeChar(string, index):#is zero indexed
-    if len(string) == 0 or string == '':
+    if len(string) == 0 or string == '' or index < 0 or index >= len(string):
         return string
     else:
         stringArray = [char for char in string]
