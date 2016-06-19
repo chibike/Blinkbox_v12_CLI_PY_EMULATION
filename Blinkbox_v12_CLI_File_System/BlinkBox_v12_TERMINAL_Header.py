@@ -305,9 +305,8 @@ class CommandInterface(QtGui.QGraphicsScene):
                 self._input_mode = False
                 self.processData(data)
             elif key == '\b':
-                self._input_data = removeChar(self._input_data, self._column - self._current_line_start_column)
                 self.backspace()
-                #self._input_data = self._input_data[:-1]
+                self._input_data = removeChar(self._input_data, self._column - self._current_line_start_column)
             elif key == '\t':
                 print "Tab btn"
             elif str(event.key()) == '16777235':#KEY DOWN
@@ -614,9 +613,11 @@ def fileParseCsvData(filename):
         return ["ERROR"]
 
 def insertChar(string, char, index):#is zero indexed
+    print "insert index =",index
     return string[:index] + char + string[index:]
 
 def removeChar(string, index):#is zero indexed
+    print "remove index =",index
     stringArray = [char for char in string]
     stringArray.pop(index)
     string = ''
