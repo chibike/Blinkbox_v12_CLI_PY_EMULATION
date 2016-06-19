@@ -23,6 +23,13 @@ class CommandInterface(QtGui.QGraphicsScene):
         brush.setStyle(QtCore.Qt.SolidPattern)
         self.setBackgroundBrush(brush)
 
+        self._input_mode = False
+        self._current_line = None
+
+        self._data_type = None
+        self._data_collection_mode = None
+        self._input_data = None
+        
         self._line = 0
         self._column = 0
         self._cursor = self.addRect(0,0, 10,10)
@@ -53,38 +60,108 @@ class CommandInterface(QtGui.QGraphicsScene):
         return_obj = super(CommandInterface, self).setFont(font)
         self.updateCursor()
         return return_obj
-    def addText( self, text, font, color):
-        textItem = super(CommandInterface, self).addText(text, font)
+    def addText( self, text, color):
+        textItem = super(CommandInterface, self).addText(text, self.font())
         textItem.setDefaultTextColor(color)
+        self._current_text_edit = textItem
         return textItem
-    def printf( self, string, font, color ):
-        textItem = self.addText(string, font, color)
-        point_size = textItem.font().pointSize()
-        
-        textItem.setPos(self._column*point_size*0.8, self._line*point_size)
-        textItem.setData(0, [self._line, self._column])
+    def backspace(self):
+        if ( self._current_line == None or not(isinstance(self._current_line, QtGui.QGraphicsTextItem)) ):
+            return
+        else:
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.deletePreviousChar()
+            self._column -= 1
+            point_size = self._current_line.font().pointSize()
+            self._cursor.setPos(int(self._column*point_size*0.84),
+                                int(self._line*point_size) + int(0.6 * point_size))
+            self._cursor.setData(0, [self._line, self._column])
+            
+    def printf( self, string, color=None ):
+        if(self._current_line == None and color != None):
+            self._current_line = self.addText('', color)
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.beginEditBlock()
+            self.kursor.insertText(string)
+            self.kursor.endEditBlock()
+
+            point_size = self._current_line.font().pointSize()
+            self._current_line.setPos(self._column*point_size*0.8, 1.5*self._line*point_size)
+            self._current_line.setData(0, [self._line, self._column])
+        elif ( self._current_line == None and color == None ):
+            self._current_line = self.addText('', QtGui.QColor(0,255,0))
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.beginEditBlock()
+            self.kursor.insertText(string)
+            self.kursor.endEditBlock()
+
+            point_size = self._current_line.font().pointSize()
+            self._current_line.setPos(self._column*point_size*0.8, 1.5*self._line*point_size)
+            self._current_line.setData(0, [self._line, self._column])
+        elif ( self._current_line != None and color != None ):
+            self._current_line.setDefaultTextColor(color)
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.insertText(string)
+        elif isinstance(self._current_line, QtGui.QGraphicsTextItem):
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.insertText(string)
+
+        point_size = self._current_line.font().pointSize()
         
         self._column += len(string)
-        x = int(self._column*point_size*0.84)
-        y = int(self._line*point_size) + int(0.6 * point_size)
-        #print "(line,column) =",(self._line,self._column)
-        #print "(x,y) =",(x,y)
-        self._cursor.setPos(x, y)
-        self._cursor.setData(0, [self._line, self._column])
-        return textItem
-    def println( self, string, font, color ):
-        textItem = self.addText(string, font, color)
-        point_size = textItem.font().pointSize()
-        
-        textItem.setPos(self._column*point_size*0.8, self._line*point_size)
-        textItem.setData(0, [self._line, self._column])
-        
-        self._line += 1
-        self._column = 0
         self._cursor.setPos(int(self._column*point_size*0.84),
-                            int(self._line*point_size) + int(0.0 * point_size))
+                            int(1.2*self._line*point_size) + int(0.7 * point_size))
         self._cursor.setData(0, [self._line, self._column])
-        return textItem
+        return self._current_line
+
+    def println( self, string, color=None):
+        if(self._current_line == None and color != None):
+            self._current_line = self.addText('', color)
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.beginEditBlock()
+            self.kursor.insertText(string)
+            self.kursor.endEditBlock()
+            point_size = self._current_line.font().pointSize()
+            self._current_line.setPos(self._column*point_size*0.8, 1.5*self._line*point_size)
+            self._current_line.setData(0, [self._line, self._column])
+        elif ( self._current_line == None and color == None ):
+            self._current_line = self.addText('', QtGui.QColor(0,255,0))
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.beginEditBlock()
+            self.kursor.insertText(string)
+            self.kursor.endEditBlock()
+
+            point_size = self._current_line.font().pointSize()
+            self._current_line.setPos(self._column*point_size*0.8, 1.5*self._line*point_size)
+            self._current_line.setData(0, [self._line, self._column])
+        elif ( self._current_line != None and color != None ):
+            self._current_line.setDefaultTextColor(color)
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.insertText(string)
+        elif isinstance(self._current_line, QtGui.QGraphicsTextItem):
+            self.kursor = QtGui.QTextCursor(self._current_line.document())
+            self.kursor.clearSelection()
+            self.kursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            self.kursor.insertText(string)
+
+        point_size = self._current_line.font().pointSize()
+        
+        self._column = 0
+        self._line += 1
+        self._current_line = None
+        self._cursor.setPos(int(self._column*point_size*0.84),
+                            int(1.2*self._line*point_size) + int(0.7 * point_size))
+        self._cursor.setData(0, [self._line, self._column])
+        return self._current_line
+    
     def blinkCursor(self):
         if self._cursor_state == False:
             self._cursor_pen.setStyle(QtCore.Qt.SolidLine)
@@ -106,9 +183,60 @@ class CommandInterface(QtGui.QGraphicsScene):
         height = int(1.4 * point_size)
         self._cursor.setRect(0, 0, width, height)
         self._cursor.setPos(x,y)
-    def inputf( self ):
-        pass
-
+    def inputf( self, prompt, data_type='' ):
+        self._input_mode = True
+        self.printf(prompt, QtGui.QColor(0,255,0))
+        self._data_type = data_type
+        self._input_data = ''
+    def keyPressEvent(self, event):
+        super(CommandInterface, self).keyPressEvent(event)
+        if self._input_mode == True:
+            key = event.text()
+            if key == '\n' or key == '\r':
+                data = str(self._input_data)
+                self.println(" ;")
+                self._input_mode = False
+                self.processData(data)
+            elif key == '\b':
+                self.backspace()
+                self._input_data = self._input_data[:-1]
+            elif key == '\t':
+                print "Tab"
+            else:
+                self._input_data = self._input_data + str(key)
+                if self._data_type != "__password__":
+                    #self.printf(str(key), QtGui.QColor(0,255,0))
+                    self.printf(str(key))
+                else:
+                    #self.printf("*", QtGui.QColor(0,255,0))
+                    self.printf("*")
+        return
+    def processData(self, data):
+        if self._data_collection_mode == "__verify_user__":
+            if self._data_type == "__username__":
+                self._bucket = data
+                self._data_collection_mode = "__verify_user__"
+                self.inputf( "Password: ", "__password__" )
+            elif self._data_type == "__password__":
+                ssids = fileParseCsvData("SSIDS.txt")
+                keys = fileParseCsvData("KEYS.txt")
+                users = dict(zip(ssids, keys))
+                try:
+                    if users[self._bucket] == data:
+                        self.printf("Success")
+                    else:
+                        self.verifyUser()
+                except:
+                    self.verifyUser()
+            else:
+                pass
+        elif self._data_collection_mode == "__command__":
+            pass
+        else:
+            pass
+    def verifyUser(self):
+        self._data_collection_mode = "__verify_user__"
+        self.inputf( "Username: ", "__username__" )
 def fileParseCsvData(filename):
     try:
         with open(filename, 'r') as file:

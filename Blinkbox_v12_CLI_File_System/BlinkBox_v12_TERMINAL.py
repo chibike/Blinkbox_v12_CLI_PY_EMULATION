@@ -24,7 +24,7 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.verticallayout.setObjectName(_fromUtf8("verticallayout"))
         
         self.commandInterface = CommandInterface()
-        self.commandInterface.setSceneRect(0, 0, 1060, 720)
+        self.commandInterface.setSceneRect(0, 0, 1050, 710)
         
         self.graphicsView = QtGui.QGraphicsView( self.commandInterface )
         self.graphicsView.setGeometry(QtCore.QRect(0, 0, 1080, 740))
@@ -87,12 +87,8 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.actionRestart.setText(_translate("Ui_MainWindow", "Restart", None))
         self.show()
     def start(self):
-        self.commandInterface.printf("Blink_v12 Shell 1.1 [on Blink Os v12]", self.commandInterface.font(), QtGui.QColor(0,255,0))
-        ssids = fileParseCsvData("SSIDS.txt")
-        keys = fileParseCsvData("KEYS.txt")
-        users = dict(zip(ssids, keys))
-        #self.commandInterface.println("Username: ", self.commandInterface.font(), QtGui.QColor(0,0,255))
-
+        self.commandInterface.println("Blink_v12 Shell 1.1 [on Blink Os v12]", QtGui.QColor(0,255,0))
+        self.commandInterface.verifyUser()
     def timerEvent(self):
         self.commandInterface.blinkCursor()
     def editFont(self):
