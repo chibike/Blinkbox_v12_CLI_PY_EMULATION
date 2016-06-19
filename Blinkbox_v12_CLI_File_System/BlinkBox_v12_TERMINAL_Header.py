@@ -613,14 +613,15 @@ def fileParseCsvData(filename):
         return ["ERROR"]
 
 def insertChar(string, char, index):#is zero indexed
-    print "insert index =",index
     return string[:index] + char + string[index:]
 
 def removeChar(string, index):#is zero indexed
-    print "remove index =",index
-    stringArray = [char for char in string]
-    stringArray.pop(index)
-    string = ''
-    for i in stringArray:
-        string = string + i
-    return string
+    if len(string) == 0 or string == '':
+        return string
+    else:
+        stringArray = [char for char in string]
+        stringArray.pop(index)
+        string = ''
+        for i in stringArray:
+            string = string + i
+        return string
