@@ -29,7 +29,6 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.graphicsView = QtGui.QGraphicsView( self.commandInterface )
         self.graphicsView.setGeometry(QtCore.QRect(0, 0, 1080, 740))
         self.graphicsView.setMaximumSize(QtCore.QSize(1080, 740))
-        #self.graphicsView.centerOn(self.commandInterface.items()[0])
         self.verticallayout.addWidget(self.graphicsView)
 
         self.graphicsView.setObjectName(_fromUtf8("graphicsView"))
@@ -91,6 +90,9 @@ class Ui_MainWindow(QtGui.QMainWindow):
         self.commandInterface.verifyUser()
     def timerEvent(self):
         self.commandInterface.blinkCursor()
+        cursor = self.commandInterface.getCursor()
+        if cursor != None and isinstance(cursor, QtGui.QGraphicsRectItem):
+            self.graphicsView.centerOn(cursor)
     def editFont(self):
         font, valid = QtGui.QFontDialog.getFont()
         if valid:
