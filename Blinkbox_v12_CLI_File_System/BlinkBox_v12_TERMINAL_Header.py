@@ -1,6 +1,8 @@
 from PyQt4 import QtCore, QtGui
+import os,sys,pyttsx
 
-import os,sys
+engine = pyttsx.init()
+
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -90,14 +92,14 @@ class CommandInterface(QtGui.QGraphicsScene):
 
         self._cursor_on_brush = QtGui.QBrush()
         self._cursor_on_brush.setStyle(QtCore.Qt.SolidPattern)
-        self._cursor_on_brush.setColor(QtGui.QColor(0, 255, 0))
+        self._cursor_on_brush.setColor(QtGui.QColor(0, 0, 255))
 
         self._cursor_off_brush = QtGui.QBrush()
         self._cursor_off_brush.setStyle(QtCore.Qt.SolidPattern)
         self._cursor_off_brush.setColor(QtGui.QColor(0, 0, 0))
 
         self._cursor_pen = QtGui.QPen()
-        self._cursor_pen.setColor(QtGui.QColor(0, 255, 0))
+        self._cursor_pen.setColor(QtGui.QColor(0, 0, 255))
         self._cursor_pen.setStyle(QtCore.Qt.SolidLine)
         
         self._cursor.setBrush(self._cursor_on_brush)
@@ -402,6 +404,10 @@ class CommandInterface(QtGui.QGraphicsScene):
                         self._data_collection_mode = "__command__"
                         self.inputf( self._USER+" "+self._PWD+" > ",
                                      "__command__" )
+                        engine.say("Hello "+self._bucket+" you are most welcome")
+                        engine.runAndWait()
+                        engine.say("What's can I do for you today")
+                        engine.runAndWait()
                     else:
                         self.verifyUser()
                 except:
@@ -442,6 +448,8 @@ class CommandInterface(QtGui.QGraphicsScene):
                 self.processTreeCmd( data[4:], self._PWD )
             elif data.startswith("touch "):
                 self.processTouchCmd( data[6:], self._PWD )
+            elif data.startswith("nano "):
+                self.processNanoCmd( data[5:], self._PWD )
             elif data == "clear":
                 self.processClearCmd()
             elif data == '':
@@ -461,6 +469,23 @@ class CommandInterface(QtGui.QGraphicsScene):
                          "__command__" )
         else:
             pass
+    def processNanoCmd( self, options, current_dir ):
+        options = options.lstrip().rstrip().split(' ')
+        filename = options[0]
+        if filename == '' or len(filename) == 0:
+            return self.println("ERROR invalid filename", QtGui.QColor(255, 0, 0))
+        if filename.startswith('\\') and filename.count('.') >= 1:
+            try:
+                os.system("start notepad "+self._WIN_PWD+filename)
+            except:
+                self.println("ERROR could not lanuch file", QtGui.QColor(255, 0, 0))
+        elif filename.count('.') >= 1:
+            try:
+                os.system("start notepad "+self._WIN_PWD + current_dir+'\\'+filename)
+            except:
+                self.println("ERROR could not lanuch file", QtGui.QColor(255, 0, 0))
+        else:
+            self.println("ERROR could not lanuch file", QtGui.QColor(255, 0, 0))
     def processClearCmd(self):
         self.clearUi()
     def processRemoveCmd( self, options, current_dir ):
@@ -470,7 +495,7 @@ class CommandInterface(QtGui.QGraphicsScene):
             self.println("ERROR could not remove file", QtGui.QColor(255, 0, 0))
         elif File.startswith('\\'):
             try:
-                os.remove(self._WIN_PWD+'\\'+File)
+                os.remove(self._WIN_PWD+File)
             except OSError:
                 self.println("ERROR directory is not empty", QtGui.QColor(255, 0, 0))
             except:
@@ -511,11 +536,11 @@ class CommandInterface(QtGui.QGraphicsScene):
         if options[0] == '':
             self.println( self.processTabs( self.getTabs(tab_index) ) + current_dir.split('\\')[-1], QtGui.QColor(255, 255, 0))
             tab_index += 1
-            for filename in os.listdir( self._WIN_PWD+'\\'+current_dir ):
+            for filename in os.listdir( self._WIN_PWD+current_dir ):
                 if filename.count('.') <= 0:# is directory
                     self.processTreeCmd( '', current_dir+'\\'+filename, tab_index )
                 else:
-                    self.println( self.processTabs( self.getTabs(tab_index) ) + filename , QtGui.QColor(0, 0, 255))
+                    self.println( self.processTabs( self.getTabs(tab_index) ) + filename , QtGui.QColor(0, 255, 0))
         else:
             filename = options[0]
             if filename.startswith('\\'):
